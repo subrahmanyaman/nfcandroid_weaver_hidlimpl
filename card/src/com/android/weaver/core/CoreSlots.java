@@ -35,7 +35,6 @@ class CoreSlots implements Slots {
     private Slot[] mSlots;
 
     CoreSlots(boolean isUpgrading) {
-        // Initialize the device locked status
         if (!isUpgrading) {
             // Allocate all memory up front
             mSlots = new Slot[NUM_SLOTS];
@@ -100,7 +99,7 @@ class CoreSlots implements Slots {
         private byte[] mValue;
         private short mFailureCount;
         private DSTimer mBackoffTimer;
-        
+
         Slot(boolean isUpgrading) {
             if(!isUpgrading) {
                 mKey = new byte[Consts.SLOT_KEY_BYTES];
@@ -255,40 +254,40 @@ class CoreSlots implements Slots {
         }
 
         static public short getBackupPrimitiveByteCount() {
-  	    //mFailureCount- 2 bytes
-  	    //boolean value to check timer instance created- 1 byte
-  	    return (short)3;
+            //mFailureCount- 2 bytes
+            //boolean value to check timer instance created- 1 byte
+            return (short)3;
         }
 
         static public short getBackupObjectCount() {
-	    //key - 1
-  	    //value 1
+            //key - 1
+            //value 1
 	    return (short)2;
 	}
 
-  	static public void onSave(Element element, Slot sObj) {
-  	    element.write((sObj.mBackoffTimer != null) ? true : false);
-  	    element.write(sObj.mFailureCount);
-  	    element.write(sObj.mKey);
-  	    element.write(sObj.mValue);
+        static public void onSave(Element element, Slot sObj) {
+            element.write((sObj.mBackoffTimer != null) ? true : false);
+            element.write(sObj.mFailureCount);
+            element.write(sObj.mKey);
+            element.write(sObj.mValue);
         }
 
         static public void onRestore(Element element, Slot sObj) {
 	    if(element.readBoolean()) {
-	    	sObj.mBackoffTimer = DSTimer.getInstance();
+                sObj.mBackoffTimer = DSTimer.getInstance();
 	    }
 	    sObj.mFailureCount = element.readShort();
 	    sObj.mKey = (byte[]) element.readObject();
 	    sObj.mValue = (byte[]) element.readObject();
         }
     }
-    
+
     static Element onSave(CoreSlots csObj) {
-    	//WEAVER_PACKAGE_VERSION- 2 bytes
-    	short primitiveCount = 2;
-    	primitiveCount += (Slot.getBackupPrimitiveByteCount() * NUM_SLOTS);
-    	short objectCount = (short)(Slot.getBackupObjectCount() * NUM_SLOTS);
-	// Create element.
+        //WEAVER_PACKAGE_VERSION- 2 bytes
+        short primitiveCount = 2;
+        primitiveCount += (Slot.getBackupPrimitiveByteCount() * NUM_SLOTS);
+        short objectCount = (short)(Slot.getBackupObjectCount() * NUM_SLOTS);
+        // Create element.
 	Element element =
 	        UpgradeManager.createElement(Element.TYPE_SIMPLE, primitiveCount, objectCount);
         element.write(WeaverCore.WEAVER_PACKAGE_VERSION);
@@ -299,12 +298,12 @@ class CoreSlots implements Slots {
     }
 
     static CoreSlots onRestore(Element ele) {
-    	short oldVersion = ele.readShort();
-    	if (WeaverCore.WEAVER_PACKAGE_VERSION < oldVersion) {
-    	    ISOException.throwIt(ISO7816.SW_CONDITIONS_NOT_SATISFIED);
-    	}
-    	CoreSlots csObj = new CoreSlots(true);
-    	csObj.mSlots = new Slot[NUM_SLOTS];
+        short oldVersion = ele.readShort();
+        if (WeaverCore.WEAVER_PACKAGE_VERSION < oldVersion) {
+            ISOException.throwIt(ISO7816.SW_CONDITIONS_NOT_SATISFIED);
+        }
+        CoreSlots csObj = new CoreSlots(true);
+        csObj.mSlots = new Slot[NUM_SLOTS];
         for (short i = 0; i < NUM_SLOTS; ++i) {
             csObj.mSlots[i] = new Slot(true);
             Slot.onRestore(ele, csObj.mSlots[i]);

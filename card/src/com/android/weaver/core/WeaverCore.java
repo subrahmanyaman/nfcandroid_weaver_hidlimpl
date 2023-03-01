@@ -37,10 +37,10 @@ class WeaverCore extends Applet implements OnUpgradeListener {
 
     protected WeaverCore() {
         // Allocate all memory up front
-    	boolean isUpgrading = UpgradeManager.isUpgrading();
-    	if(!isUpgrading) {
+        boolean isUpgrading = UpgradeManager.isUpgrading();
+        if(!isUpgrading) {
             mSlots = new CoreSlots(isUpgrading);
-    	}
+        }
         register();
     }
 
@@ -77,7 +77,7 @@ class WeaverCore extends Applet implements OnUpgradeListener {
     }
 
     @Override
-    public void onCleanup() {		
+    public void onCleanup() {
     }
 
     @Override
@@ -86,7 +86,7 @@ class WeaverCore extends Applet implements OnUpgradeListener {
 
     @Override
     public void onRestore(Element arg0) {
-        mSlots = CoreSlots.onRestore(arg0);		
+        mSlots = CoreSlots.onRestore(arg0);
     }
 
     @Override
