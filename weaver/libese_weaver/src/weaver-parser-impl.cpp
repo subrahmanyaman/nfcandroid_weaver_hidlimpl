@@ -18,6 +18,7 @@
 
 #define LOG_TAG "weaver-parser-impl"
 #include <weaver_parser-impl.h>
+#include <arpa/inet.h>
 #include <weaver_utils.h>
 
 WeaverParserImpl *WeaverParserImpl::s_instance = NULL;
@@ -47,6 +48,7 @@ std::once_flag WeaverParserImpl::s_instanceFlag;
 /* Supported Size by Applet */
 #define KEY_SIZE 16
 #define VALUE_SIZE 16
+#define TIMEOUT_SIZE 4
 #define RES_STATUS_SIZE 2
 
 /* For Applet Read Response TAG */
@@ -240,7 +242,7 @@ Status_Weaver WeaverParserImpl::ParseReadInfo(std::vector<uint8_t> response,
     return status;
   }
   if (isSuccess(response)) {
-    readInfo.timeout = 0; // Applet not supporting timeout value
+    readInfo.timeout = 0;
     switch (response.at(READ_ERR_CODE_INDEX)) {
     case INCORRECT_KEY_TAG:
       LOG_E(TAG, "INCORRECT_KEY");
@@ -249,9 +251,23 @@ Status_Weaver WeaverParserImpl::ParseReadInfo(std::vector<uint8_t> response,
       break;
     case THROTTING_ENABLED_TAG:
       LOG_E(TAG, "THROTTING_ENABLED");
-      status = WEAVER_STATUS_THROTTLE;
-      readInfo.value.resize(0);
-      break;
+      if ((TIMEOUT_SIZE + READ_ERR_CODE_SIZE + RES_STATUS_SIZE) ==
+          response.size()) {
+        LOG_E(TAG, "THROTTING_ENABLED");
+        status = WEAVER_STATUS_THROTTLE;
+        uint8_t *data = response.data();
+        uint32_t timeout = 0;
+        for (size_t i = READ_ERR_CODE_SIZE; i <= sizeof(uint32_t); ++i)
+        {
+          timeout <<= 8;
+          timeout |= data[i];
+        }
+        readInfo.timeout = timeout * 1000;
+        readInfo.value.resize(0);
+      } else {
+        LOG_E(TAG, "Invalid Response");
+      }
+    break;
     case READ_SUCCESS_TAG:
       if ((VALUE_SIZE + READ_ERR_CODE_SIZE + RES_STATUS_SIZE) ==
           response.size()) {
